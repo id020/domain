@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{common :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{common :: nav}"></div>
+<div class="container">
+    <h1 class="mb-4" th:text="${isNew} ? '新增用户' : '编辑用户'"></h1>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <!-- 新增与编辑共用表单：新增提交 /users，编辑提交 /users/{id} -->
+    <form th:action="${isNew} ? @{/users} : @{/users/{id}(id=${user.id})}"
+          method="post">
+        <div class="mb-3">
+            <label class="form-label">用户名 *</label>
+            <input type="text" class="form-control" name="username" th:value="${user.username}"
+                   th:readonly="${!isNew}" required placeholder="登录用户名，唯一"/>
+            <div class="form-text" th:if="${!isNew}">用户名不可修改</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">显示名称</label>
+            <input type="text" class="form-control" name="displayName" th:value="${user.displayName}"
+                   placeholder="可选：中文名/昵称"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">密码 <span th:if="${!isNew}" class="text-muted">(留空表示不修改)</span></label>
+            <input type="text" class="form-control" name="password"
+                   placeholder="至少 6 位" th:required="${isNew}" pattern=".{6,}"
+                   autocomplete="new-password"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">角色 *</label>
+            <select class="form-select" name="role" id="roleSelect">
+                <option value="USER" th:selected="${user.role != 'ADMIN'}">普通用户 (USER)</option>
+                <option value="ADMIN" th:selected="${user.role == 'ADMIN'}">管理员 (ADMIN)</option>
+            </select>
+            <div class="form-text">管理员自动拥有全部权限，无需勾选下方权限项。</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">细粒度权限</label>
+            <div class="border rounded p-3" id="permBox">
+                <div class="form-check" th:each="p : ${permissionMeta}">
+                    <input class="form-check-input" type="checkbox" name="permissions"
+                           th:id="${'perm_' + p.code}" th:value="${p.code}"
+                           th:checked="${checkedPerms.contains(p.code)}"/>
+                    <label class="form-check-label" th:for="${'perm_' + p.code}">
+                        <strong th:text="${p.label}">权限</strong>
+                        <span class="text-muted" th:text="'（' + ${p.desc} + '）'"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-text">仅对“普通用户”生效；管理员忽略此项。</div>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input class="form-check-input" type="checkbox" name="enabled" id="enabledCb"
+                   th:checked="${user.enabled}" value="true"/>
+            <label class="form-check-label" for="enabledCb">账户启用（取消勾选将禁止该用户登录）</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a th:href="@{/users}" class="btn btn-secondary">返回</a>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 角色为管理员时禁用权限勾选框（管理员自动拥有全部权限）
+    (function () {
+        var role = document.getElementById('roleSelect');
+        var boxes = document.querySelectorAll('#permBox input[type=checkbox]');
+        function sync() {
+            var isAdmin = role.value === 'ADMIN';
+            boxes.forEach(function (b) { b.disabled = isAdmin; });
+        }
+        role.addEventListener('change', sync);
+        sync();
+    })();
+</script>
+</body>
+</html>

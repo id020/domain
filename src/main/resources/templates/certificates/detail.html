@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{common :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{common :: nav}"></div>
+<div class="container">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0" th:text="${cert.name}">证书</h1>
+        <div>
+            <form th:if="${cert.type.name() == 'ACME_ISSUED'}" th:action="@{/certificates/{id}/renew(id=${cert.id})}"
+                  method="post" style="display:inline-block;margin:0">
+                <button class="btn btn-outline-success btn-sm" type="submit"
+                        onclick="return confirm('立即重新申请该证书？请确认 HTTP-01 验证可用。')">立即续签</button>
+            </form>
+            <a class="btn btn-primary btn-sm" th:href="@{/certificates/{id}/download(id=${cert.id})}">下载证书</a>
+            <a class="btn btn-secondary btn-sm" th:href="@{/certificates}">返回列表</a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">证书信息</div>
+        <div class="card-body">
+            <p>来源：
+                <span th:if="${cert.type.name() == 'ACME_ISSUED'}" class="badge bg-info">ACME 自动签发</span>
+                <span th:if="${cert.type.name() == 'UPLOADED'}" class="badge bg-secondary">手动上传</span>
+            </p>
+            <p>主域名(CN)：<span th:text="${cert.commonName} ?: '—'"></span></p>
+            <p>适用域名(SAN)：<span th:text="${cert.sanDomains} ?: '—'"></span></p>
+            <p>签发者：<span th:text="${cert.issuer} ?: '—'"></span></p>
+            <p>序列号：<span th:text="${cert.serialNumber} ?: '—'"></span></p>
+            <p>签名算法：<span th:text="${cert.signatureAlgorithm} ?: '—'"></span></p>
+            <p>公钥：<span th:text="${cert.publicKeyAlgorithm} ?: '—'"></span></p>
+            <p>生效时间：<span th:text="${cert.notBefore != null ? #temporals.format(cert.notBefore, 'yyyy-MM-dd HH:mm') : '—'}"></span></p>
+            <p>到期时间：<span th:text="${cert.notAfter != null ? #temporals.format(cert.notAfter, 'yyyy-MM-dd HH:mm') : '—'}"></span></p>
+            <p class="text-muted small" th:if="${cert.type.name() == 'ACME_ISSUED'}">Spring Boot 内置 HTTPS：证书签发成功后，若启用自动部署，还需重启应用才能加载新的 PKCS12。</p>
+            <p>自动续期：<span th:text="${cert.autoRenew} ? '是' : '否'"></span></p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">证书内容（PEM）</div>
+        <div class="card-body">
+            <pre class="mb-0" th:text="${cert.certPem}"></pre>
+        </div>
+    </div>
+
+    <div class="card mb-4" th:if="${cert.privateKeyPem != null && !cert.privateKeyPem.isBlank()}">
+        <div class="card-header">私钥（PEM，请妥善保管）</div>
+        <div class="card-body">
+            <pre class="mb-0" th:text="${cert.privateKeyPem}"></pre>
+        </div>
+    </div>
+
+    <form th:action="@{/certificates/{id}/delete(id=${cert.id})}" method="post"
+          onsubmit="return confirm('确认删除该证书？');">
+        <button class="btn btn-danger">删除证书</button>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

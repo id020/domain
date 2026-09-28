@@ -1,0 +1,75 @@
+# ============================================================
+# 主配置文件（本地开发默认）。生产/容器环境通过 Spring Profile 覆盖。
+# ============================================================
+spring:
+  application:
+    name: cert-manager
+
+  # Thymeleaf 模板引擎配置
+  thymeleaf:
+    cache: false          # 关闭模板缓存，方便开发期热更新
+    mode: HTML
+    encoding: UTF-8
+    prefix: classpath:/templates/
+    suffix: .html
+
+  # JPA / Hibernate 配置
+  jpa:
+    hibernate:
+      ddl-auto: update    # 内部小系统：自动根据实体更新表结构（首次运行建表）
+    show-sql: false       # 是否打印 SQL（调试时可临时开启）
+    open-in-view: false   # 关闭 OSIV，避免长事务与连接占用
+    properties:
+      hibernate:
+        format_sql: false
+
+  # 数据源（本地默认）。生产请通过环境变量覆盖密码，避免硬编码。
+  datasource:
+    url: jdbc:mysql://localhost:3306/task?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # 邮件（过期预警可选）。默认关闭，开启后填写 SMTP 信息。
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+# 内嵌 Web 服务器端口
+server:
+  port: ${SERVER_PORT:8080}
+
+# ============================================================
+# 自定义业务配置（通过 CertProperties 绑定）
+# ============================================================
+cert:
+  check:
+    timeout-ms: 5000                              # SSL 连接与读取超时（毫秒）
+    alert-days: 30                                # 剩余天数阈值：<= 该值视为即将过期并预警
+    scheduler-cron: "0 0 2 * * ?"                 # 每日凌晨 2 点自动检测所有域名
+  mail:
+    enabled: ${CERT_MAIL_ENABLED:false}           # 是否真正发送邮件预警
+    from: ${CERT_MAIL_FROM:cert-manager@company.com}
+    to: ${CERT_MAIL_TO:admin@company.com}
+  acme:
+    # Let's Encrypt 生产目录；如需测试可切换为 staging 地址避免配额限制
+    server-url: ${ACME_SERVER_URL:https://acme-v02.api.letsencrypt.org/directory}
+    contact-email: ${ACME_CONTACT_EMAIL:admin@company.com}  # ACME 账户联系邮箱
+    challenge: ${ACME_CHALLENGE:HTTP-01}          # 挑战类型：HTTP-01 或 DNS-01
+    webroot: ${ACME_WEBROOT:./acme-challenges}    # HTTP-01 验证文件存放根目录（需公网可访问）
+
+    # 自动续签：只处理 autoRenew=true 且由 ACME 签发的证书
+    renew-before-days: ${ACME_RENEW_BEFORE_DAYS:30}
+    # Spring Boot 内置 HTTPS 部署：必须显式开启，避免覆盖不相关站点证书
+    deploy-to-embedded-https: ${ACME_DEPLOY_HTTPS:false}
+    deploy-domain: ${ACME_DEPLOY_DOMAIN:}
+    keystore-path: ${ACME_KEYSTORE_PATH:./data/https.p12}
+    keystore-password: ${ACME_KEYSTORE_PASSWORD:}

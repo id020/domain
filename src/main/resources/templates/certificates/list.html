@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{common :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{common :: nav}"></div>
+<div class="container">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">证书管理</h1>
+        <div>
+            <a class="btn btn-primary btn-sm" th:href="@{/certificates/new}">上传证书</a>
+            <a class="btn btn-success btn-sm" th:href="@{/certificates/issue}">ACME 签发</a>
+        </div>
+    </div>
+
+    <table class="table table-striped table-hover align-middle">
+        <thead>
+        <tr><th>别名</th><th>来源</th><th>主域名</th><th>SAN</th><th>到期时间</th><th>状态</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="c : ${certificates}">
+            <td><a th:href="@{/certificates/{id}(id=${c.id})}" th:text="${c.name}"></a></td>
+            <td>
+                <span th:if="${c.type.name() == 'ACME_ISSUED'}" class="badge bg-info">ACME</span>
+                <span th:if="${c.type.name() == 'UPLOADED'}" class="badge bg-secondary">上传</span>
+            </td>
+            <td th:text="${c.commonName} ?: '—'"></td>
+            <td th:text="${c.sanDomains} ?: '—'"></td>
+            <td th:text="${c.notAfter != null ? #temporals.format(c.notAfter, 'yyyy-MM-dd') : '—'}"></td>
+            <td>
+                <span th:if="${c.notAfter != null && c.notAfter.isBefore(T(java.time.LocalDateTime).now())}"
+                      class="badge bg-danger">已过期</span>
+                <span th:if="${c.notAfter != null && !c.notAfter.isBefore(T(java.time.LocalDateTime).now())}"
+                      class="badge bg-success">有效</span>
+            </td>
+            <td>
+                <a class="btn btn-sm btn-outline-secondary" th:href="@{/certificates/{id}(id=${c.id})}">详情</a>
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/certificates/{id}/download(id=${c.id})}">下载</a>
+                <form th:action="@{/certificates/{id}/delete(id=${c.id})}" method="post" style="display:inline"
+                      onsubmit="return confirm('确认删除该证书？');">
+                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${certificates.isEmpty()}">
+            <td colspan="7" class="text-center text-muted">暂无证书，可上传或 ACME 签发</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

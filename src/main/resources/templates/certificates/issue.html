@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{common :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{common :: nav}"></div>
+<div class="container">
+    <h1 class="mb-4">ACME 签发证书</h1>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="alert alert-info">
+        前置条件：域名需<b>公网可达</b>，且 80 端口路径
+        <code>/.well-known/acme-challenge/</code> 能访问到本系统写入的验证文件
+        （本系统已内置该路径的服务端点）。
+    </div>
+
+    <form th:action="@{/certificates/issue}" method="post">
+        <div class="mb-3">
+            <label class="form-label">主域名 *</label>
+            <input type="text" class="form-control" name="domainName" placeholder="www.example.com" required/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">附加域名（SAN，逗号分隔）</label>
+            <input type="text" class="form-control" name="sans" placeholder="api.example.com, m.example.com"/>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="autoRenew" id="autoRenew" value="true"/>
+            <label class="form-check-label" for="autoRenew">开启自动续期</label>
+        </div>
+        <button type="submit" class="btn btn-primary">开始签发</button>
+        <a class="btn btn-secondary" th:href="@{/certificates}">返回</a>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{common :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{common :: nav}"></div>
+<div class="container">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">用户管理</h1>
+        <a class="btn btn-primary btn-sm" th:href="@{/users/new}">+ 新增用户</a>
+    </div>
+
+    <table class="table table-striped table-hover align-middle">
+        <thead>
+        <tr>
+            <th>用户名</th>
+            <th>显示名称</th>
+            <th>角色</th>
+            <th>状态</th>
+            <th>权限</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="u : ${users}">
+            <td th:text="${u.username}">admin</td>
+            <td th:text="${u.displayName} ?: '—'">—</td>
+            <td>
+                <span th:if="${u.role == 'ADMIN'}" class="badge bg-danger">管理员</span>
+                <span th:if="${u.role != 'ADMIN'}" class="badge bg-secondary">普通用户</span>
+            </td>
+            <td>
+                <span th:if="${u.enabled}" class="badge bg-success">启用</span>
+                <span th:if="${!u.enabled}" class="badge bg-light text-dark">禁用</span>
+            </td>
+            <td>
+                <span th:each="label : ${u.permissionLabels}"
+                      class="badge bg-info text-dark me-1" th:text="${label}">权限</span>
+                <span th:if="${u.permissionLabels.isEmpty()}" class="text-muted">无</span>
+            </td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/users/{id}/edit(id=${u.id})}">编辑</a>
+                <!-- 重置密码：弹出输入框 -->
+                <form th:action="@{/users/{id}/reset-password(id=${u.id})}" method="post" style="display:inline"
+                      onsubmit="return confirm('确认将该用户密码重置为下方输入值？');">
+                    <input type="text" name="newPassword" class="form-control form-control-sm d-inline" style="width:120px"
+                           placeholder="新密码" required pattern=".{6,}"/>
+                    <button class="btn btn-sm btn-outline-warning">重置密码</button>
+                </form>
+                <form th:action="@{/users/{id}/toggle(id=${u.id})}" method="post" style="display:inline">
+                    <button class="btn btn-sm btn-outline-secondary"
+                            th:text="${u.enabled} ? '禁用' : '启用'">禁用</button>
+                </form>
+                <form th:action="@{/users/{id}/delete(id=${u.id})}" method="post" style="display:inline"
+                      onsubmit="return confirm('确认删除该用户？此操作不可恢复。');">
+                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${users.isEmpty()}">
+            <td colspan="6" class="text-center text-muted">暂无用户</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

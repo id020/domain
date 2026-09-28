@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{common :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{common :: nav}"></div>
+<div class="container">
+
+    <!-- 操作反馈（来自重定向的 flash 属性） -->
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <h1 class="mb-4">仪表盘</h1>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-2">
+            <div class="card text-bg-primary">
+                <div class="card-body"><h6 class="card-title">监控域名</h6><h2 th:text="${totalDomains}">0</h2></div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card text-bg-warning">
+                <div class="card-body"><h6 class="card-title">即将过期</h6><h2 th:text="${expiringCount}">0</h2></div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card text-bg-danger">
+                <div class="card-body"><h6 class="card-title">已过期</h6><h2 th:text="${expiredCount}">0</h2></div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card text-bg-info">
+                <div class="card-body"><h6 class="card-title">证书总数</h6><h2 th:text="${totalCerts}">0</h2></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 到期预警提示 -->
+    <div th:if="${!alertDomains.isEmpty() || !alertCerts.isEmpty()}" class="alert alert-warning">
+        <strong>到期预警：</strong> 共 <span th:text="${alertDomains.size() + alertCerts.size()}"></span> 项需要关注
+        （域名 <span th:text="${alertDomains.size()}"></span> 个，证书 <span th:text="${alertCerts.size()}"></span> 张）
+    </div>
+
+    <!-- 域名列表 -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="mb-0">域名列表</h3>
+        <a class="btn btn-primary btn-sm" th:href="@{/domains/new}">+ 新增域名</a>
+    </div>
+    <table class="table table-striped table-hover align-middle">
+        <thead>
+        <tr>
+            <th>域名</th><th>端口</th><th>状态</th><th>剩余天数</th>
+            <th>到期时间</th><th>最后检测</th><th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="d : ${domains}">
+            <td><a th:href="@{/domains/{id}(id=${d.id})}" th:text="${d.name}"></a></td>
+            <td th:text="${d.port}">443</td>
+            <td>
+                <span th:switch="${d.certStatus != null ? d.certStatus.name() : ''}">
+                    <span th:case="'OK'" class="badge bg-success">正常</span>
+                    <span th:case="'EXPIRING'" class="badge bg-warning text-dark">即将过期</span>
+                    <span th:case="'EXPIRED'" class="badge bg-danger">已过期</span>
+                    <span th:case="'NONE'" class="badge bg-secondary">无证书</span>
+                    <span th:case="'ERROR'" class="badge bg-danger">检测失败</span>
+                    <span th:case="''" class="badge bg-light text-dark">未检测</span>
+                </span>
+            </td>
+            <td>
+                <span th:if="${d.certDaysLeft != null}" th:text="${d.certDaysLeft} + ' 天'">0 天</span>
+                <span th:if="${d.certDaysLeft == null}" class="text-muted">—</span>
+            </td>
+            <td th:text="${d.certExpiryAt != null ? #temporals.format(d.certExpiryAt, 'yyyy-MM-dd HH:mm') : '—'}">—</td>
+            <td th:text="${d.lastCheckAt != null ? #temporals.format(d.lastCheckAt, 'yyyy-MM-dd HH:mm') : '—'}">—</td>
+            <td>
+                <a class="btn btn-sm btn-outline-secondary" th:href="@{/domains/{id}(id=${d.id})}">详情</a>
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/domains/{id}/edit(id=${d.id})}">编辑</a>
+                <form th:action="@{/domains/{id}/check(id=${d.id})}" method="post" style="display:inline">
+                    <button class="btn btn-sm btn-outline-success">检测</button>
+                </form>
+                <form th:action="@{/domains/{id}/delete(id=${d.id})}" method="post" style="display:inline"
+                      onsubmit="return confirm('确认删除该域名？');">
+                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${domains.isEmpty()}">
+            <td colspan="7" class="text-center text-muted">暂无域名，点击右上角新增</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

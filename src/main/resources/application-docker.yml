@@ -1,0 +1,14 @@
+# ============================================================
+# Docker 环境专用配置（通过 SPRING_PROFILES_ACTIVE=docker 激活）。
+# 主要覆盖数据源指向容器内的 mysql 服务，以及持久化路径。
+# ============================================================
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/cert_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:cert_user}
+    password: ${DB_PASSWORD:cert_pass}
+
+cert:
+  acme:
+    # 容器内 HTTP-01 验证文件目录，挂载到持久卷
+    webroot: /data/acme-challenges
